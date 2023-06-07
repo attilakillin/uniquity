@@ -17,10 +17,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	// Replace H2 with MySQL for final version
-	runtimeOnly 'com.h2database:h2'
-	//runtimeOnly 'com.mysql:mysql-connector-j'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootJar {
+	archiveFileName.set(archiveBaseName.get() + '.' + archiveExtension.get())
+	destinationDirectory.set(file(project.buildDir))
 }
 
 tasks.named('test') {

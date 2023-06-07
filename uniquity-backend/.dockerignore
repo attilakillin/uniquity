@@ -1,0 +1,12 @@
+# Docker-related files
+Dockerfile
+.dockerignore
+
+# Unnecessary build folders and IDE folders
+.gradle/
+.idea/
+build/
+
+# Git artifacts
+.git/
+.gitignore
