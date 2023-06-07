@@ -1,79 +1,88 @@
 package attilakillin.uniquitybackend.controllers;
 
-import attilakillin.uniquitybackend.model.HistoryResponse;
-import attilakillin.uniquitybackend.model.NamesResponse;
-import attilakillin.uniquitybackend.model.RequestResponse;
+import attilakillin.uniquitybackend.dtos.ListDTO;
+import attilakillin.uniquitybackend.dtos.RequestDTO;
 import attilakillin.uniquitybackend.services.LoggingService;
 import attilakillin.uniquitybackend.services.UniquityService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
+/**
+ * The main API controller of the application.
+ * Contains two endpoints (specified below) that implement various tasks.
+ */
 @Controller
 @RequestMapping("/api")
 public class ApiController {
+    /**
+     * Logging service class.
+     */
     private final LoggingService loggingService;
+    /**
+     * Uniquity service class.
+     */
     private final UniquityService uniquityService;
-    private final Logger logger;
 
+    /**
+     * Public constructor with two injected service dependencies.
+     * @param loggingService An instance of the LoggingService service.
+     * @param uniquityService An instance of the UniquityService service.
+     */
     public ApiController(
         LoggingService loggingService,
         UniquityService uniquityService
     ) {
         this.loggingService = loggingService;
         this.uniquityService = uniquityService;
-        this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    @Operation(summary = "List unique file names under the preconfigured folder")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", content = {
-            @Content(mediaType = "application/json", schema = @Schema(implementation = NamesResponse.class))
-        })
-    })
-
+    /**
+     * Retrieve the list of files present under the preconfigured folder (recursively).
+     * All files will only be present once in the result.
+     * @param extension The file extension to search for. May be unspecified.
+     * @return The list of the found files.
+     */
     @GetMapping("/unique-names")
-    public ResponseEntity<NamesResponse> getUniqueNames(@Param("extension") String extension) {
+    public ResponseEntity<ListDTO<String>> getUniqueNames(
+            @RequestParam(value = "extension", required = false) String extension
+    ) throws IOException {
+        // Sanitize incoming parameter.
+        if (extension == null) {
+            extension = "";
+        }
+
+        // Log that a request has been received.
         loggingService.logClientRequest(extension);
 
-        try {
-            Collection<String> names = uniquityService.listUniqueNames("/home/origin/Downloads", extension);
-            return ResponseEntity.ok(new NamesResponse(names));
+        // Execute request. Thrown errors are handled by the ApiControllerAdvisor class.
+        Collection<String> names = uniquityService.listUniqueNames("/home/origin/Downloads", extension);
 
-        } catch (Exception ex) {
-            logger.error("An exception occurred while listing unique names:");
-            logger.error(ex.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+        // Return an HTTP 200 response.
+        return ResponseEntity.ok(new ListDTO<>(names));
     }
 
-    @Operation(summary = "List historical requests")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {
-                    @Content(mediaType = "application/json", schema = @Schema(implementation = HistoryResponse.class))
-            })
-    })
-
+    /**
+     * Retrieve the list of previous requests (which server instance executed a query,
+     * when, and what extension was queried).
+     *
+     * @return A list of the previously made requests.
+     */
     @GetMapping("/history")
-    public ResponseEntity<HistoryResponse> getHistory() {
-        Collection<RequestResponse> requests = loggingService
+    public ResponseEntity<ListDTO<RequestDTO>> getHistory() {
+        // Retrieve requests and map them to DTO objects.
+        Collection<RequestDTO> requests = loggingService
                 .getHistoricalRequests()
                 .stream()
-                .map(RequestResponse::new)
+                .map(RequestDTO::new)
                 .toList();
 
-        return ResponseEntity.ok(new HistoryResponse(requests));
+        // Return an HTTP 200 response.
+        return ResponseEntity.ok(new ListDTO<>(requests));
     }
 }
