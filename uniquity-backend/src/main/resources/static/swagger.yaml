@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: Uniquity backend
+  description:
+    A Spring Boot server application that can list the unique file names
+    under a preconfigured folder on the server.
+  version: 1.0.0
+
+paths:
+  /api/unique-names:
+    get:
+      description:
+        Retrieve the list of files present under the preconfigured folder (recursively).
+        All files will only be present exactly once in the result.
+      parameters:
+        - name: extension
+          in: query
+          description: The file extension to search for.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Request executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UniqueNamesResponse'
+        400:
+          description: Bad request, the extension query parameter was not specified.
+  /api/history:
+    get:
+      description:
+        Retrieve the list of previous requests (which server instance executed a query,
+        when, and what extension was queried).
+      responses:
+        200:
+          description: Request executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryResponse'
+
+components:
+  schemas:
+    UniqueNamesResponse:
+      type: object
+      description:
+        The result list of a unique names query request containing
+        each file name exactly once.
+      properties:
+        count:
+          type: integer
+          description: The number of results found.
+        content:
+          type: array
+          description: The content of the result list.
+          items:
+            type: string
+            description: The name of the file.
+    HistoryResponse:
+      type: object
+      description:
+        The result list of a history query request containing each previous logged request.
+      properties:
+        count:
+          type: integer
+          description: The number of results found.
+        content:
+          type: array
+          description: The content of the result list.
+          items:
+            type: object
+            description: The logged history entry.
+            properties:
+              host:
+                type: string
+                description: The host user of the server instance that executed the request.
+              timestamp:
+                type: string
+                description: The exact moment when the request was received, as a formatted string.
+              extension:
+                type: string
+                description: The file extension that the request query contained.
