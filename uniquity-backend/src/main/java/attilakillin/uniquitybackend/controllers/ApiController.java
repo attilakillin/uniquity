@@ -1,5 +1,6 @@
 package attilakillin.uniquitybackend.controllers;
 
+import attilakillin.uniquitybackend.configuration.PropertiesConfiguration;
 import attilakillin.uniquitybackend.dtos.ListDTO;
 import attilakillin.uniquitybackend.dtos.RequestDTO;
 import attilakillin.uniquitybackend.services.LoggingService;
@@ -30,38 +31,46 @@ public class ApiController {
     private final UniquityService uniquityService;
 
     /**
+     * Application-specific configuration values.
+     */
+    private final PropertiesConfiguration configuration;
+
+    /**
      * Public constructor with two injected service dependencies.
      * @param loggingService An instance of the LoggingService service.
      * @param uniquityService An instance of the UniquityService service.
      */
     public ApiController(
         LoggingService loggingService,
-        UniquityService uniquityService
+        UniquityService uniquityService,
+        PropertiesConfiguration configuration
     ) {
         this.loggingService = loggingService;
         this.uniquityService = uniquityService;
+        this.configuration = configuration;
     }
 
     /**
      * Retrieve the list of files present under the preconfigured folder (recursively).
-     * All files will only be present once in the result.
-     * @param extension The file extension to search for. May be unspecified.
+     * All files will only be present exactly once in the result.
+     * @param extension The file extension to search for.
      * @return The list of the found files.
      */
     @GetMapping("/unique-names")
     public ResponseEntity<ListDTO<String>> getUniqueNames(
             @RequestParam(value = "extension", required = false) String extension
     ) throws IOException {
-        // Sanitize incoming parameter.
+        // If the extension was null, we return a bad request response.
         if (extension == null) {
-            extension = "";
+            return ResponseEntity.badRequest().build();
         }
 
         // Log that a request has been received.
         loggingService.logClientRequest(extension);
 
         // Execute request. Thrown errors are handled by the ApiControllerAdvisor class.
-        Collection<String> names = uniquityService.listUniqueNames("/home/origin/Downloads", extension);
+        Collection<String> names = uniquityService
+                .listUniqueNames(this.configuration.getRootFolder(), extension);
 
         // Return an HTTP 200 response.
         return ResponseEntity.ok(new ListDTO<>(names));
