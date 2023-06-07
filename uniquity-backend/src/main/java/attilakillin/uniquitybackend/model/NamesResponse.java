@@ -2,11 +2,11 @@ package attilakillin.uniquitybackend.model;
 
 import java.util.Collection;
 
-public class NamesResult {
+public class NamesResponse {
     private final long count;
     private final Collection<String> names;
 
-    public NamesResult(Collection<String> names) {
+    public NamesResponse(Collection<String> names) {
         this.names = names;
         this.count = names.size();
     }
