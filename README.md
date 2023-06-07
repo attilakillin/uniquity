@@ -28,7 +28,7 @@ to see the API endpoints of either server instance. You can send requests from h
 ## Configuration
 
 Change the values in the `.env` file to influence the behaviour of the application. You can change the database
-authentication parameters, as well as the name of the database to use, and you can separately configure each of
+authentication parameters, the name of the database to use, and you can separately configure each of
 the two Spring Boot instances.
 
 ### Backend configuration
@@ -50,8 +50,8 @@ can be used to query former requests made to any running server instance.
 
 The `/api/unique-names` endpoint can be used to list all unique files present in the preconfigured folder,
 or its subfolders,
-that have a matching extension to the one provided as a query parameter (`extension`, required - the server
-returns an HTTP 400 status code if no value is provided for it).
+that have a matching file extension to the one provided as a query parameter (`extension`, required -
+the server returns an HTTP 400 status code if no value is provided for it).
 
 Sample request:
 
@@ -72,12 +72,12 @@ Sample response:
 Each server instance persists previous queries in a shared database instance. The other endpoint,
 `/api/history` can be used to retrieve a list of all previous queries with the following information:
 
-* Which server instance executed the query?
+* Which server instance executed the query? (More exactly, what was the `USER` configuration value set to?)
 * When was the query made (in UTC timestamps)?
-* Which extension was queried?
+* Which file extension was queried?
 
-Because the database that persists this information is shared between the backend instances, it does not
-matter which backend is queried for this historical data, all instances return the same values.
+Because the database that tracks this information is shared between the backend instances, it does not
+matter which backend is queried for the data, all instances return the same values.
 
 Sample request:
 
@@ -105,4 +105,4 @@ Sample response:
 
 As an added challenge, Podman was used instead of Docker, and no other orchestration helper tool was
 used. The makefile only contains Podman subcommands, and nothing else other than the built-in tools
-(and `grep` once to wait until the containers fully initialize).
+(and `grep` once to wait until the containers fully initialize) was used.
