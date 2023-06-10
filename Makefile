@@ -5,12 +5,6 @@ export $(shell sed 's/=.*//' .env)
 # What the base image of the build backend application should be named.
 BASE_NAME="uniquity-base"
 
-# Custom function - wait until the string specified by the second
-# parameter appears in the podman logs of the container specified
-# by the first parameter.
-define wait_on_logs
-	while ! (podman logs $(1) 2>&1 | grep -q '$(2)'); do sleep 3; done
-endef
 
 # Pull/build images and start containers.
 all: build start
@@ -35,7 +29,7 @@ start:
 		docker.io/mysql:8
 	
 	@echo Waiting until the database is ready to accept connections...
-	$(call wait_on_logs,uniquity-db,ready for connections)
+	while ! (podman exec -it uniquity-db mysqladmin ping --protocol tcp > /dev/null); do sleep 3; done
 	
 	podman run -d -p=8080:8080 --name uniquity-server-1 --net uniquity-network \
 		-e DB_URL=jdbc:mysql://uniquity-db:3306/$(DB_DATABASE) \
@@ -51,8 +45,8 @@ start:
 		uniquity-backend-2
 
 	@echo Waiting until both server instances are ready...
-	$(call wait_on_logs,uniquity-server-1,Started UniquityBackendApplication)
-	$(call wait_on_logs,uniquity-server-2,Started UniquityBackendApplication)
+	while ! (curl --fail --silent localhost:8080/actuator/health | grep UP || exit 1); do sleep 3; done
+	while ! (curl --fail --silent localhost:8081/actuator/health | grep UP || exit 1); do sleep 3; done
 
 # Stop and remove containers. Does not remove images.
 stop:
