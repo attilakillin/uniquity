@@ -18,4 +18,4 @@ RUN addgroup -S $username && adduser -S $username -G $username
 USER $username
 
 # Copy systemd files
-COPY --from=systemd-files /etc/systemd /etc/systemd
+COPY --from=systemd-files /usr/lib/systemd /systemd
