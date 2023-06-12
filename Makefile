@@ -14,9 +14,17 @@ build:
 	podman pull docker.io/mysql:8
 	podman build -t $(BASE_NAME) -f base.Dockerfile ./uniquity-backend
 	podman build -t uniquity-backend-1 -f add-extras.Dockerfile \
-		--build-arg image=$(BASE_NAME) --build-arg username=$(S1_USER) .
+		--build-arg systemd_image=$(SYSTEMD_IMAGE) \
+		--build-arg systemd_path=$(SYSTEMD_PATH) \
+		--build-arg image=$(BASE_NAME) \
+		--build-arg username=$(S1_USER) \
+		.
 	podman build -t uniquity-backend-2 -f add-extras.Dockerfile \
-		--build-arg image=$(BASE_NAME) --build-arg username=$(S2_USER) .
+		--build-arg systemd_image=$(SYSTEMD_IMAGE) \
+		--build-arg systemd_path=$(SYSTEMD_PATH) \
+		--build-arg image=$(BASE_NAME) \
+		--build-arg username=$(S2_USER) \
+		.
 
 # Create and start containers.
 start:
